@@ -1,4 +1,4 @@
-# Pebblecore
+# Grovecore
 
 Core javascript library for Pebbles-applications using Grove
 
