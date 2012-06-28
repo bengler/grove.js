@@ -124,7 +124,7 @@ class exports.GrovePost extends Backbone.Model
     @set('tags', _.union(@get('tags') || [], _.flatten(arguments)))
     @
   untag: (tags) ->
-    @set('tags', _.without(@get('tags') || [], _.flatten(arguments)...))
+    @set('tags', _.difference(@get('tags') || [], _.flatten(arguments)))
     @
   addPath: (path) ->
     services.grove.post(@url()+"/paths/#{path}").then (post) ->
