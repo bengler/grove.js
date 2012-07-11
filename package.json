@@ -19,11 +19,11 @@
   },
   "scripts": {
     "test": "node_modules/.bin/mocha -r should",
-    "jenkins-test" : "node_modules/.bin/mocha -r should -R tap"
+    "jenkins-test": "node_modules/.bin/mocha -r should -R tap"
   },
   "lib": ".",
   "main": "index.js",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "optionalDependencies": {},
   "engines": {
     "node": "*"
