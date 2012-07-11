@@ -8,7 +8,7 @@
     "backbone": ">=0.9.1",
     "underscore": ">=1.3.1",
     "jquery": "git://github.com/bjoerge/jquery-node#v1.7.2",
-    "pebblecore": "git://github.com/bengler/pebblecore#v0.1.2",
+    "pebblecore": "git://github.com/bengler/pebblecore#v0.2.0",
     "backbone_pebbles": "git://github.com/bengler/backbone_pebbles#v0.0.2",
     "queryparams-coffee": "git://github.com/bjoerge/queryparams-coffee"
   },
