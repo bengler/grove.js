@@ -1,7 +1,8 @@
 _ = require('underscore') unless _?
 $ = require('jquery') unless $?
 pebblecore = require('pebblecore')
-Backbone = require('backbone_pebbles')
+Backbone = require("backbone")
+require('backbone_pebbles')
 QueryParams = require('queryparams-coffee').QueryParams
 
 services = new pebblecore.service.ServiceSet
