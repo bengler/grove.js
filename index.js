@@ -1,1 +1,1 @@
-module.exports = require("./lib/grovecore");
+module.exports = require("./lib/grove");

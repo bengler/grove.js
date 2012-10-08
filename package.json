@@ -1,7 +1,7 @@
 {
-  "name": "grovecore",
+  "name": "grove",
   "description": "JS core tools for Pebbles apps using Grove",
-  "url": "http://github.com/bengler/grovecore",
+  "url": "http://github.com/bengler/grove.js",
   "author": "Bengler <bengler@bengler.no>",
   "contributors": [],
   "dependencies": {
