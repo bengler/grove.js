@@ -28,17 +28,18 @@ models for each item when you load collections.
 
 E.g.:
 
-    class Issue extends grovecore.GrovePost
-      klass: "post.issue"
-      initialize: (attributes) ->
-        @tag("unresolved")
-      newMessage: (attributes) ->
-        @newChild("post.message", attributes)
-      newLogEntry: (attributes) ->
-        @newChild("post.log_entry", attributes)
-      setResolved: ->
-        @untag("unresolved")
-        @save()
+```coffee-script
+class Issue extends grove.GrovePost
+  klass: "post.issue"
+  initialize: (attributes) ->
+    @tag("unresolved")
+  newMessage: (attributes) ->
+    @newChild("post.message", attributes)
+  newLogEntry: (attributes) ->
+    @newChild("post.log_entry", attributes)
+  setResolved: ->
+    @untag("unresolved")
+    @save()
 
-    grovecore.GrovePost.registerModel(core.Issue)
-
+grove.GrovePost.registerModel(core.Issue)
+```
