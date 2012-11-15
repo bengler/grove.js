@@ -1,26 +1,25 @@
-_ = require('underscore') unless _?
-$ = require('jquery') unless $?
-pebblecore = require('pebblecore')
+pebbles = require('pebbles')
 Backbone = require("backbone")
-require('backbone_pebbles')
+_ = require("underscore")
+pebblify = require('pebbles-backbone').pebblify
+
 QueryParams = require('queryparams-coffee').QueryParams
 
-services = new pebblecore.service.ServiceSet
-  grove: 1
-
-Uid = pebblecore.uid.Uid
+Uid = pebbles.uid.Uid
 
 isArray = (obj) -> Object::toString.call(obj) == '[object Array]';
 
-exports.config = {realm: null, appPath: null}
+grove = exports
 
-exports.setRealm = (realm) ->
-  exports.config.realm = realm
-  exports.config.appPath = "#{realm}.resolve"
+grove.config = {realm: null, appPath: null}
+
+grove.setRealm = (realm) ->
+  grove.config.realm = realm
+  grove.config.appPath = "#{realm}.resolve"
 
 # Calculates the Uid of the parent object for an object with the provided uid.
 # E.g. "post.message:a.b.5$9" --> "*:a.b$5"
-exports.uidOfParent = (uid) ->
+grove.uidOfParent = (uid) ->
   [klass, path, oid] = Uid.raw_parse(uid)
   labels = path.split('.')
   oid = labels.pop()
@@ -29,7 +28,7 @@ exports.uidOfParent = (uid) ->
 
 # Calculates the path for children of this object by sticking the oid in the path:
 # E.g. "post.activity:a.b$5" --> "a.b.5"
-exports.pathOfChildren = (uid) ->
+grove.pathOfChildren = (uid) ->
   [klass, path, oid] = Uid.raw_parse(uid)
   return null unless oid? # Unknown unless oid is set
   "#{path}.#{oid}"
@@ -45,7 +44,7 @@ exports.pathOfChildren = (uid) ->
 # ['a.b', 'c.d']
 # This is not okay because paths varies in length:
 # ['a.b.c', 'a.b']
-exports.generateSuperPath = (paths) ->
+grove.generateSuperPath = (paths) ->
   return null if paths.length == 0
   return paths[0] if paths.length == 1
   paths = _.map paths, (path) ->
@@ -96,7 +95,8 @@ class DocumentAccessor
 # Common base model for all Grove posts. Keeps a map of all specific
 # post models. Add a special model for a Grove post klass by giving it
 # a 'klass' property and adding it with GrovePost.registerModel.
-class exports.GrovePost extends Backbone.Model
+class grove.GrovePost extends Backbone.Model
+  pebblify(@).with namespace: "post"
   idAttribute: "uid"
   namespace: "post"
   klass: "post"
@@ -110,15 +110,16 @@ class exports.GrovePost extends Backbone.Model
         uid += "$#{_oid}" if _oid?
         @set("uid", uid)
   url: ->
-    services.grove.service_url("/posts/#{@id}")
+    "/posts/#{@id}"
+
   uid: ->
     Uid.fromString(@id)
   childPath: ->
-    exports.pathOfChildren(@id)
+    grove.pathOfChildren(@id)
   parentUid: ->
-    exports.uidOfParent(@id)
+    grove.uidOfParent(@id)
   newChild: (klass, attributes) ->
-    modelClass = exports.GrovePost.klassMap[klass] || exports.GrovePost
+    modelClass = grove.GrovePost.klassMap[klass] || grove.GrovePost
     attributes = _.extend(_.clone(attributes), {uid: "#{klass}:#{@childPath()}"})
     new modelClass(attributes)
   tag: (tags) ->
@@ -142,50 +143,58 @@ class exports.GrovePost extends Backbone.Model
   isNew: ->
     !@get("uid").match(/\$\d+$/)
 
-_.extend exports.GrovePost,
+_.extend grove.GrovePost,
   klassMap: {}
   registerModel: (model) ->
     @klassMap[model::klass] = model
 
   instantiate: (record) ->
     klass = Uid.fromString(record.uid).klass
-    modelClass = @klassMap[klass] || exports.GrovePost
+    modelClass = @klassMap[klass] || grove.GrovePost
     new modelClass(record)
 
 
+chain = (func)->
+  (args...)->
+    func.apply(this, args)
+    this
+
 # A chainable api to configure the filtering of GroveCollections
-class exports.GroveFilter
+class grove.GroveFilter
   constructor: (settings) ->
     @reset(settings || {})
+
   reset: (settings) ->
     @settings = _.clone(settings)
+
   clone: ->
-    new exports.GroveFilter(@settings)
-  path: (path) ->
+    new grove.GroveFilter(@settings)
+
+  path: chain (path)->
     @settings.path = path
-    @
-  oid: (oid) ->
+
+  oid: chain (oid) ->
     @settings.oid = oid
-    @
-  klass: (klass) ->
+
+  klass: chain (klass) ->
     @settings.klass = klass
-    @
-  childrenOf: (post) ->
+
+  childrenOf: chain (post) ->
     paths = _.map _.flatten(arguments), (post) ->
       post.childPath()
-    superpath = exports.generateSuperPath(paths)
+    superpath = grove.generateSuperPath(paths)
     throw "Unable to create superpath for [#{paths.join(', ')}]" unless superpath?
     @path(superpath).oid("*").klass("*")
-    @
-  limit: (count) ->
+
+  limit: chain (count) ->
     @settings.limit = count
-    @
-  offset: (index) ->
+
+  offset: chain (index) ->
     @settings.offset = index
-    @
-  tags: (array) ->
+
+  tags: chain (array) ->
     @settings.tags = array
-    @
+
   url: (action) ->
     params = _.clone(@settings)
     # Extract path and oid and build the id part of the url
@@ -202,20 +211,17 @@ class exports.GroveFilter
     _query = QueryParams.encode(params)
     url = "/posts/#{_id}"
     url += "/#{action}" if action?
-    url += "?#{_query}"
-    services.grove.service_url(url)
+    "#{url}?#{_query}"
 
 
 # Polymorphic collection that knows how to load a filtered collection of
 # GrovePosts and instantiate the correct model class for each post.
-class exports.GroveCollection extends Backbone.Collection
-  namespace: "posts"
+class grove.GroveCollection extends Backbone.Collection
+  pebblify(@).with namespace: "post"
   initialize: (models, options) ->
-    @filter = options?.filter || new exports.GroveFilter()
+    @filter = options?.filter || new grove.GroveFilter()
   url: ->
     @filter.url()
   parse: (response) ->
     _.map response.posts, (record) ->
-      exports.GrovePost.instantiate(record.post)
-
-@resolvecore = core unless exports?
+      grove.GrovePost.instantiate(record.post)
